@@ -1,0 +1,9 @@
+﻿H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\01_observer_class_diagram.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\02_observer_sequence_diagram.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\03_state_class_diagram.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\04_state_state_diagram.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\05_state_normal_sequence.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\06_state_invalid_sequence.png
+H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images\07_state_return_sequence.png
+EA project generated: H:\福建师范大学\大三下\软件体系与架构设计\实验十一\实验11_121072021030_林立洲.eap
+EA diagram images exported to: H:\福建师范大学\大三下\软件体系与架构设计\实验十一\report-images

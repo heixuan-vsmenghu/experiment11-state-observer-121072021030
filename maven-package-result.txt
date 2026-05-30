@@ -1,0 +1,37 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< com.lzl:experiment11-state-observer >-----------------
+[INFO] Building experiment11-state-observer 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ experiment11-state-observer ---
+[INFO] Deleting H:\福建师范大学\大三下\软件体系与架构设计\实验十一\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ experiment11-state-observer ---
+[INFO] skip non existing resourceDirectory H:\福建师范大学\大三下\软件体系与架构设计\实验十一\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ experiment11-state-observer ---
+[WARNING]  Parameter 'compilerVersion' (user property 'maven.compiler.compilerVersion') is deprecated: This parameter is no longer evaluated by the underlying compilers, instead the actual version of the javac binary is automatically retrieved.
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 22 source files with javac [debug target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ experiment11-state-observer ---
+[INFO] skip non existing resourceDirectory H:\福建师范大学\大三下\软件体系与架构设计\实验十一\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ experiment11-state-observer ---
+[WARNING]  Parameter 'compilerVersion' (user property 'maven.compiler.compilerVersion') is deprecated: This parameter is no longer evaluated by the underlying compilers, instead the actual version of the javac binary is automatically retrieved.
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ experiment11-state-observer ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ experiment11-state-observer ---
+[INFO] Building jar: H:\福建师范大学\大三下\软件体系与架构设计\实验十一\target\experiment11-state-observer-1.0.0.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.458 s
+[INFO] Finished at: 2026-05-31T05:50:04+08:00
+[INFO] ------------------------------------------------------------------------
