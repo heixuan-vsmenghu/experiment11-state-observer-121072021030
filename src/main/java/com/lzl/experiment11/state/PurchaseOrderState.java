@@ -7,9 +7,11 @@ public interface PurchaseOrderState {
 
     void cancel(PurchaseOrder order);
 
-    void generateInboundOrder(PurchaseOrder order);
+    void revokeApproval(PurchaseOrder order, UserRole role);
 
-    void generateInvoice(PurchaseOrder order);
+    void generateInboundOrder(PurchaseOrder order, int inboundQuantity);
+
+    void generateInvoice(PurchaseOrder order, int invoiceQuantity);
 
     void pay(PurchaseOrder order);
 

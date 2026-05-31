@@ -111,7 +111,8 @@ def project_structure_text():
 │   ├── 04_state_state_diagram.png
 │   ├── 05_state_normal_sequence.png
 │   ├── 06_state_invalid_sequence.png
-│   └── 07_state_return_sequence.png
+│   ├── 07_state_return_sequence.png
+│   └── 16_advanced_bonus_result.png
 └── src/main/java/com/lzl/experiment11
     ├── MainApp.java
     ├── observer
@@ -129,12 +130,24 @@ def project_structure_text():
         ├── AbstractPurchaseOrderState.java
         ├── DraftState.java
         ├── ApprovedState.java
+        ├── PartiallyInStockState.java
         ├── InStockState.java
+        ├── PartiallyInvoicedState.java
         ├── InvoicedState.java
         ├── PaidState.java
         ├── CancelledState.java
         ├── ReturnedState.java
         ├── OperationLog.java
+        ├── UserRole.java
+        ├── DocumentType.java
+        ├── BusinessDocument.java
+        ├── BusinessDocumentFactory.java
+        ├── InboundOrderDocument.java
+        ├── InvoiceDocument.java
+        ├── ReturnOrderDocument.java
+        ├── validation
+        │   ├── OrderValidationRule.java
+        │   └── OrderValidationChains.java
         ├── BusinessException.java
         └── Experiment11Demo.java"""
 
@@ -166,8 +179,14 @@ def main():
     )
     render_text_image(
         "退货退款流程运行结果",
-        between(run_result, "========== 退货退款流程测试 =========="),
+        between(run_result, "========== 退货退款流程测试 ==========", "========== 进阶加分流程测试 =========="),
         "13_state_return_result.png",
+        width=1500,
+    )
+    render_text_image(
+        "进阶加分流程运行结果",
+        between(run_result, "========== 进阶加分流程测试 =========="),
+        "16_advanced_bonus_result.png",
         width=1500,
     )
     render_text_image(

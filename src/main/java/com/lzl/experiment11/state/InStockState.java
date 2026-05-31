@@ -1,5 +1,7 @@
 package com.lzl.experiment11.state;
 
+import com.lzl.experiment11.state.validation.OrderValidationChains;
+
 public class InStockState extends AbstractPurchaseOrderState {
     @Override
     public void cancel(PurchaseOrder order) {
@@ -7,13 +9,23 @@ public class InStockState extends AbstractPurchaseOrderState {
     }
 
     @Override
-    public void generateInvoice(PurchaseOrder order) {
-        order.changeState(new InvoicedState(), "生成发票", "采购单已完成入库，发票生成成功。");
+    public void generateInvoice(PurchaseOrder order, int invoiceQuantity) {
+        OrderValidationChains.validateBusinessQuantity("生成发票", invoiceQuantity, order.getRemainingInvoiceQuantity());
+        BusinessDocument document = order.recordInvoiceDocument(invoiceQuantity);
+        if (order.isInvoiceComplete()) {
+            order.changeState(new InvoicedState(), "生成发票",
+                    document.getDocumentNo() + " 已生成，采购单全部开票。");
+            return;
+        }
+        order.changeState(new PartiallyInvoicedState(), "部分开票",
+                document.getDocumentNo() + " 已生成，当前已开票 " + order.getInvoiceQuantity() + "/" + order.getQuantity() + "。");
     }
 
     @Override
     public void returnAndRefund(PurchaseOrder order) {
-        order.changeState(new ReturnedState(), "退货退款", "已入库采购单退货退款成功，流程完结。");
+        BusinessDocument document = order.recordReturnDocument(order.getInboundQuantity());
+        order.changeState(new ReturnedState(), "退货退款",
+                document.getDocumentNo() + " 已生成，已入库采购单退货退款成功，流程完结。");
     }
 
     @Override

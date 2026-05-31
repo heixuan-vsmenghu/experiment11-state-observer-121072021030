@@ -1,8 +1,11 @@
 package com.lzl.experiment11.state;
 
+import com.lzl.experiment11.state.validation.OrderValidationChains;
+
 public class DraftState extends AbstractPurchaseOrderState {
     @Override
     public void edit(PurchaseOrder order, String productName, int quantity, String supplier) {
+        OrderValidationChains.validateEdit(productName, quantity, supplier);
         String beforeState = order.getStateName();
         order.updateBasicInfo(productName, quantity, supplier);
         order.recordOperation("编辑采购单", beforeState, order.getStateName(),

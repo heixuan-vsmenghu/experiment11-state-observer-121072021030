@@ -17,12 +17,17 @@ public abstract class AbstractPurchaseOrderState implements PurchaseOrderState {
     }
 
     @Override
-    public void generateInboundOrder(PurchaseOrder order) {
+    public void revokeApproval(PurchaseOrder order, UserRole role) {
+        reject("撤销审批", "只有已审批状态允许执行审批撤销。");
+    }
+
+    @Override
+    public void generateInboundOrder(PurchaseOrder order, int inboundQuantity) {
         reject("生成入库单", "只有已审批状态的采购单允许生成入库单。");
     }
 
     @Override
-    public void generateInvoice(PurchaseOrder order) {
+    public void generateInvoice(PurchaseOrder order, int invoiceQuantity) {
         reject("生成发票", "只有已入库状态的采购单允许生成发票。");
     }
 

@@ -24,7 +24,8 @@ experiment11-state-observer
 │   ├── 12_state_invalid_result.png
 │   ├── 13_state_return_result.png
 │   ├── 14_maven_package_success.png
-│   └── 15_git_commit_success.png
+│   ├── 15_git_commit_success.png
+│   └── 16_advanced_bonus_result.png
 ├── scripts
 │   ├── create_report_assets.py
 │   ├── generate_ea_project.ps1
@@ -46,11 +47,30 @@ experiment11-state-observer
         ├── AbstractPurchaseOrderState.java
         ├── DraftState.java
         ├── ApprovedState.java
+        ├── PartiallyInStockState.java
         ├── InStockState.java
+        ├── PartiallyInvoicedState.java
         ├── InvoicedState.java
         ├── PaidState.java
         ├── CancelledState.java
         ├── ReturnedState.java
         ├── OperationLog.java
+        ├── UserRole.java
+        ├── DocumentType.java
+        ├── BusinessDocument.java
+        ├── AbstractBusinessDocument.java
+        ├── InboundOrderDocument.java
+        ├── InvoiceDocument.java
+        ├── ReturnOrderDocument.java
+        ├── BusinessDocumentFactory.java
         ├── BusinessException.java
-        └── Experiment11Demo.java
+        ├── Experiment11Demo.java
+        └── validation
+            ├── ValidationContext.java
+            ├── OrderValidationRule.java
+            ├── ProductNameRequiredRule.java
+            ├── PositiveQuantityRule.java
+            ├── SupplierRequiredRule.java
+            ├── MaxQuantityRule.java
+            ├── AdminRoleRule.java
+            └── OrderValidationChains.java

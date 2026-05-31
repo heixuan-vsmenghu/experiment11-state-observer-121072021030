@@ -10,8 +10,11 @@ public class PurchaseOrder {
     private String productName;
     private int quantity;
     private double amount;
+    private int inboundQuantity;
+    private int invoiceQuantity;
     private PurchaseOrderState state;
     private final List<OperationLog> operationLogs = new ArrayList<>();
+    private final List<BusinessDocument> businessDocuments = new ArrayList<>();
 
     public PurchaseOrder(String orderNo) {
         this.orderNo = orderNo;
@@ -31,12 +34,24 @@ public class PurchaseOrder {
         state.cancel(this);
     }
 
+    public void revokeApproval(UserRole role) {
+        state.revokeApproval(this, role);
+    }
+
     public void generateInboundOrder() {
-        state.generateInboundOrder(this);
+        generateInboundOrder(getRemainingInboundQuantity());
+    }
+
+    public void generateInboundOrder(int inboundQuantity) {
+        state.generateInboundOrder(this, inboundQuantity);
     }
 
     public void generateInvoice() {
-        state.generateInvoice(this);
+        generateInvoice(getRemainingInvoiceQuantity());
+    }
+
+    public void generateInvoice(int invoiceQuantity) {
+        state.generateInvoice(this, invoiceQuantity);
     }
 
     public void pay() {
@@ -64,9 +79,19 @@ public class PurchaseOrder {
         System.out.println("采购单信息：" + orderNo);
         System.out.println("商品名称：" + display(productName));
         System.out.println("采购数量：" + quantity);
+        System.out.println("已入库数量：" + inboundQuantity);
+        System.out.println("已开票数量：" + invoiceQuantity);
         System.out.println("供应商：" + display(supplier));
         System.out.printf("采购金额：%.2f 元%n", amount);
         System.out.println("当前状态：" + getStateName());
+        System.out.println("业务单据：");
+        if (businessDocuments.isEmpty()) {
+            System.out.println("  暂无业务单据");
+        } else {
+            for (BusinessDocument document : businessDocuments) {
+                System.out.println("  " + document.getSummary());
+            }
+        }
         System.out.println("操作日志：");
         for (OperationLog log : operationLogs) {
             System.out.println("  " + log);
@@ -77,14 +102,18 @@ public class PurchaseOrder {
         return Collections.unmodifiableList(operationLogs);
     }
 
+    public List<BusinessDocument> getBusinessDocuments() {
+        return Collections.unmodifiableList(businessDocuments);
+    }
+
     void updateBasicInfo(String productName, int quantity, String supplier) {
-        if (quantity <= 0) {
-            throw new BusinessException("编辑采购单失败：采购数量必须大于 0。");
-        }
         this.productName = productName;
         this.quantity = quantity;
         this.supplier = supplier;
         this.amount = quantity * 100.0;
+        this.inboundQuantity = 0;
+        this.invoiceQuantity = 0;
+        this.businessDocuments.clear();
     }
 
     void recordOperation(String operation, String beforeState, String afterState, String message) {
@@ -98,8 +127,60 @@ public class PurchaseOrder {
         recordOperation(operation, beforeState, getStateName(), message);
     }
 
+    BusinessDocument recordInboundDocument(int inboundQuantity) {
+        this.inboundQuantity += inboundQuantity;
+        return addDocument(DocumentType.INBOUND_ORDER, inboundQuantity);
+    }
+
+    BusinessDocument recordInvoiceDocument(int invoiceQuantity) {
+        this.invoiceQuantity += invoiceQuantity;
+        return addDocument(DocumentType.INVOICE, invoiceQuantity);
+    }
+
+    BusinessDocument recordReturnDocument(int returnQuantity) {
+        return addDocument(DocumentType.RETURN_ORDER, returnQuantity);
+    }
+
+    int getRemainingInboundQuantity() {
+        return quantity - inboundQuantity;
+    }
+
+    int getRemainingInvoiceQuantity() {
+        return quantity - invoiceQuantity;
+    }
+
+    boolean isInboundComplete() {
+        return quantity > 0 && inboundQuantity == quantity;
+    }
+
+    boolean isInvoiceComplete() {
+        return quantity > 0 && invoiceQuantity == quantity;
+    }
+
+    int getQuantity() {
+        return quantity;
+    }
+
+    int getInboundQuantity() {
+        return inboundQuantity;
+    }
+
+    int getInvoiceQuantity() {
+        return invoiceQuantity;
+    }
+
     String getOrderNo() {
         return orderNo;
+    }
+
+    String nextDocumentNo(DocumentType documentType) {
+        return documentType.getCode() + "-" + orderNo + "-" + String.format("%02d", businessDocuments.size() + 1);
+    }
+
+    private BusinessDocument addDocument(DocumentType type, int documentQuantity) {
+        BusinessDocument document = BusinessDocumentFactory.create(type, this, documentQuantity);
+        businessDocuments.add(document);
+        return document;
     }
 
     private String display(String value) {

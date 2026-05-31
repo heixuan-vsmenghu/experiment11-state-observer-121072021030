@@ -13,12 +13,14 @@ public class InvoicedState extends AbstractPurchaseOrderState {
 
     @Override
     public void pay(PurchaseOrder order) {
-        order.changeState(new PaidState(), "付款", "发票已生成，付款成功，采购单进入已付款状态。");
+        order.changeState(new PaidState(), "付款", "发票已全部生成，付款成功，采购单进入已付款状态。");
     }
 
     @Override
     public void returnAndRefund(PurchaseOrder order) {
-        order.changeState(new ReturnedState(), "退货退款", "已开票采购单退货退款成功，流程完结。");
+        BusinessDocument document = order.recordReturnDocument(order.getInboundQuantity());
+        order.changeState(new ReturnedState(), "退货退款",
+                document.getDocumentNo() + " 已生成，已开票采购单退货退款成功，流程完结。");
     }
 
     @Override

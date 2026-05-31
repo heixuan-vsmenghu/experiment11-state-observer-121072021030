@@ -1,4 +1,4 @@
-﻿Git 操作结果
+Git 操作结果
 
 执行命令：git init
 结果：已在当前目录创建本地 Git 仓库。
@@ -7,14 +7,14 @@
 结果：已将项目源码、EA 项目文件、UML 图片、运行结果、README 和实验报告加入暂存区。
 
 执行命令：git commit -m "完成实验11状态模式与课堂观察者任务"
-结果：提交成功，提交信息为“完成实验11状态模式与课堂观察者任务”。
+结果：基础版本提交成功。
+
+执行命令：git commit -m "完善实验11进阶加分功能"
+结果：进阶加分版本提交成功，新增责任链校验、管理员撤销审批、部分入库、部分开票和业务单据工厂。
 
 执行命令：git branch -M main
-结果：当前分支已改为 main。
+结果：当前分支为 main。
 
-执行命令：gh repo create experiment11-state-observer-121072021030 --public --source . --remote origin --push
-结果：GitHub 公开仓库已创建并推送成功。
+执行命令：git push origin main
+结果：项目已推送到 GitHub 公开仓库。
 仓库地址：https://github.com/heixuan-vsmenghu/experiment11-state-observer-121072021030
-
-执行命令：git push -u origin main
-结果：推送成功，main 分支已关联 origin/main。

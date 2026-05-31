@@ -227,17 +227,19 @@ try {
     [void]$observerSeq.Update()
 
     $purchaseOrder = Add-Element $statePkg "PurchaseOrder" "Class"
-    "orderNo:String","supplier:String","productName:String","quantity:int","amount:double","state:PurchaseOrderState","operationLogs:List<OperationLog>" |
+    "orderNo:String","supplier:String","productName:String","quantity:int","amount:double","inboundQuantity:int","invoiceQuantity:int","state:PurchaseOrderState","operationLogs:List<OperationLog>","businessDocuments:List<BusinessDocument>" |
         ForEach-Object {
             $parts = $_.Split(":")
             Add-Attribute $purchaseOrder $parts[0] $parts[1]
         }
-    "edit(productName : String, quantity : int, supplier : String)","approve()","cancel()","generateInboundOrder()","generateInvoice()","pay()","returnAndRefund()","setState(state : PurchaseOrderState)","addLog(operation : String, beforeState : String, afterState : String, message : String)","showInfo()" |
+    "edit(productName : String, quantity : int, supplier : String)","approve()","cancel()","revokeApproval(role : UserRole)","generateInboundOrder()","generateInboundOrder(inboundQuantity : int)","generateInvoice()","generateInvoice(invoiceQuantity : int)","pay()","returnAndRefund()","setState(state : PurchaseOrderState)","addLog(operation : String, beforeState : String, afterState : String, message : String)","showInfo()" |
         ForEach-Object { Add-Method $purchaseOrder $_ "void" }
     Add-Method $purchaseOrder "getStateName()" "String"
+    "getRemainingInboundQuantity()","getRemainingInvoiceQuantity()" |
+        ForEach-Object { Add-Method $purchaseOrder $_ "int" }
 
     $state = Add-Element $statePkg "PurchaseOrderState" "Interface"
-    "edit(order : PurchaseOrder, productName : String, quantity : int, supplier : String)","approve(order : PurchaseOrder)","cancel(order : PurchaseOrder)","generateInboundOrder(order : PurchaseOrder)","generateInvoice(order : PurchaseOrder)","pay(order : PurchaseOrder)","returnAndRefund(order : PurchaseOrder)" |
+    "edit(order : PurchaseOrder, productName : String, quantity : int, supplier : String)","approve(order : PurchaseOrder)","cancel(order : PurchaseOrder)","revokeApproval(order : PurchaseOrder, role : UserRole)","generateInboundOrder(order : PurchaseOrder, inboundQuantity : int)","generateInvoice(order : PurchaseOrder, invoiceQuantity : int)","pay(order : PurchaseOrder)","returnAndRefund(order : PurchaseOrder)" |
         ForEach-Object { Add-Method $state $_ "void" }
     Add-Method $state "getStateName()" "String"
 
@@ -251,13 +253,21 @@ try {
         ForEach-Object { Add-Method $draft $_ "void" }
     Add-Method $draft "getStateName()" "String"
     $approved = Add-Element $statePkg "ApprovedState" "Class"
-    "cancel(order : PurchaseOrder)","generateInboundOrder(order : PurchaseOrder)" |
+    "cancel(order : PurchaseOrder)","revokeApproval(order : PurchaseOrder, role : UserRole)","generateInboundOrder(order : PurchaseOrder, inboundQuantity : int)" |
         ForEach-Object { Add-Method $approved $_ "void" }
     Add-Method $approved "getStateName()" "String"
+    $partiallyInStock = Add-Element $statePkg "PartiallyInStockState" "Class"
+    "cancel(order : PurchaseOrder)","generateInboundOrder(order : PurchaseOrder, inboundQuantity : int)" |
+        ForEach-Object { Add-Method $partiallyInStock $_ "void" }
+    Add-Method $partiallyInStock "getStateName()" "String"
     $inStock = Add-Element $statePkg "InStockState" "Class"
-    "cancel(order : PurchaseOrder)","generateInvoice(order : PurchaseOrder)","returnAndRefund(order : PurchaseOrder)" |
+    "cancel(order : PurchaseOrder)","generateInvoice(order : PurchaseOrder, invoiceQuantity : int)","returnAndRefund(order : PurchaseOrder)" |
         ForEach-Object { Add-Method $inStock $_ "void" }
     Add-Method $inStock "getStateName()" "String"
+    $partiallyInvoiced = Add-Element $statePkg "PartiallyInvoicedState" "Class"
+    "cancel(order : PurchaseOrder)","generateInvoice(order : PurchaseOrder, invoiceQuantity : int)","pay(order : PurchaseOrder)","returnAndRefund(order : PurchaseOrder)" |
+        ForEach-Object { Add-Method $partiallyInvoiced $_ "void" }
+    Add-Method $partiallyInvoiced "getStateName()" "String"
     $invoiced = Add-Element $statePkg "InvoicedState" "Class"
     "edit(order : PurchaseOrder, productName : String, quantity : int, supplier : String)","cancel(order : PurchaseOrder)","pay(order : PurchaseOrder)","returnAndRefund(order : PurchaseOrder)" |
         ForEach-Object { Add-Method $invoiced $_ "void" }
@@ -273,6 +283,67 @@ try {
     Add-Method $returned "returnAndRefund(order : PurchaseOrder)" "void"
     Add-Method $returned "getStateName()" "String"
 
+    $userRole = Add-Element $statePkg "UserRole" "Enumeration"
+    "OPERATOR:String","ADMIN:String" |
+        ForEach-Object {
+            $parts = $_.Split(":")
+            Add-Attribute $userRole $parts[0] $parts[1]
+        }
+    $documentType = Add-Element $statePkg "DocumentType" "Enumeration"
+    "INBOUND_ORDER:String","INVOICE:String","RETURN_ORDER:String" |
+        ForEach-Object {
+            $parts = $_.Split(":")
+            Add-Attribute $documentType $parts[0] $parts[1]
+        }
+
+    $businessDocument = Add-Element $statePkg "BusinessDocument" "Interface"
+    "getDocumentNo()","getSummary()" |
+        ForEach-Object { Add-Method $businessDocument $_ "String" }
+    Add-Method $businessDocument "getQuantity()" "int"
+    Add-Method $businessDocument "getDocumentType()" "DocumentType"
+
+    $abstractDocument = Add-Element $statePkg "AbstractBusinessDocument" "Class"
+    $abstractDocument.Abstract = "1"
+    [void]$abstractDocument.Update()
+    "documentNo:String","orderNo:String","quantity:int","createdTime:LocalDateTime" |
+        ForEach-Object {
+            $parts = $_.Split(":")
+            Add-Attribute $abstractDocument $parts[0] $parts[1]
+        }
+    "getDocumentNo()","getSummary()" |
+        ForEach-Object { Add-Method $abstractDocument $_ "String" }
+    Add-Method $abstractDocument "getQuantity()" "int"
+
+    $inboundDocument = Add-Element $statePkg "InboundOrderDocument" "Class"
+    Add-Method $inboundDocument "getDocumentType()" "DocumentType"
+    $invoiceDocument = Add-Element $statePkg "InvoiceDocument" "Class"
+    Add-Method $invoiceDocument "getDocumentType()" "DocumentType"
+    $returnDocument = Add-Element $statePkg "ReturnOrderDocument" "Class"
+    Add-Method $returnDocument "getDocumentType()" "DocumentType"
+
+    $documentFactory = Add-Element $statePkg "BusinessDocumentFactory" "Class"
+    Add-Method $documentFactory "create(type : DocumentType, order : PurchaseOrder, quantity : int)" "BusinessDocument"
+
+    $validationContext = Add-Element $statePkg "ValidationContext" "Class"
+    "operation:String","productName:String","quantity:int","maxQuantity:int","supplier:String","role:UserRole" |
+        ForEach-Object {
+            $parts = $_.Split(":")
+            Add-Attribute $validationContext $parts[0] $parts[1]
+        }
+    $validationRule = Add-Element $statePkg "OrderValidationRule" "Class"
+    $validationRule.Abstract = "1"
+    [void]$validationRule.Update()
+    "linkWith(next : OrderValidationRule)","check(context : ValidationContext)","validate(context : ValidationContext)" |
+        ForEach-Object { Add-Method $validationRule $_ "void" }
+    $validationChains = Add-Element $statePkg "OrderValidationChains" "Class"
+    "validateEdit(productName : String, quantity : int, supplier : String)","validateBusinessQuantity(operation : String, quantity : int, maxQuantity : int)","validateAdmin(operation : String, role : UserRole)" |
+        ForEach-Object { Add-Method $validationChains $_ "void" }
+    $productNameRule = Add-Element $statePkg "ProductNameRequiredRule" "Class"
+    $positiveQuantityRule = Add-Element $statePkg "PositiveQuantityRule" "Class"
+    $supplierRule = Add-Element $statePkg "SupplierRequiredRule" "Class"
+    $maxQuantityRule = Add-Element $statePkg "MaxQuantityRule" "Class"
+    $adminRoleRule = Add-Element $statePkg "AdminRoleRule" "Class"
+
     $operationLog = Add-Element $statePkg "OperationLog" "Class"
     "operation:String","beforeState:String","afterState:String","message:String","time:LocalDateTime" |
         ForEach-Object {
@@ -287,51 +358,90 @@ try {
 
     [void](Add-Connector $purchaseOrder $state "Association" "state")
     [void](Add-Connector $purchaseOrder $operationLog "Aggregation" "operationLogs")
+    [void](Add-Connector $purchaseOrder $businessDocument "Aggregation" "businessDocuments")
     Add-Realisation $repo $abstractState $state
-    foreach ($concrete in @($draft, $approved, $inStock, $invoiced, $paid, $cancelled, $returned)) {
+    foreach ($concrete in @($draft, $approved, $partiallyInStock, $inStock, $partiallyInvoiced, $invoiced, $paid, $cancelled, $returned)) {
         [void](Add-Connector $concrete $abstractState "Generalization")
     }
+    Add-Realisation $repo $abstractDocument $businessDocument
+    foreach ($documentClass in @($inboundDocument, $invoiceDocument, $returnDocument)) {
+        [void](Add-Connector $documentClass $abstractDocument "Generalization")
+    }
+    [void](Add-Connector $documentFactory $businessDocument "Dependency")
+    [void](Add-Connector $documentFactory $documentType "Dependency")
+    foreach ($rule in @($productNameRule, $positiveQuantityRule, $supplierRule, $maxQuantityRule, $adminRoleRule)) {
+        [void](Add-Connector $rule $validationRule "Generalization")
+    }
+    [void](Add-Connector $validationChains $validationRule "Dependency")
+    [void](Add-Connector $validationChains $validationContext "Dependency")
     [void](Add-Connector $experimentDemo $purchaseOrder "Dependency")
 
     $stateClassDiagram = Add-Diagram $statePkg "实验11_WMS采购单状态模式类图" "Class"
-    Add-ToDiagram $stateClassDiagram $purchaseOrder 45 75 420 230
-    Add-ToDiagram $stateClassDiagram $state 610 65 455 215
-    Add-ToDiagram $stateClassDiagram $abstractState 675 345 340 105
-    Add-ToDiagram $stateClassDiagram $operationLog 70 395 300 145
-    Add-ToDiagram $stateClassDiagram $businessException 1100 345 230 105
-    Add-ToDiagram $stateClassDiagram $draft 35 635 220 145
-    Add-ToDiagram $stateClassDiagram $approved 285 635 220 130
-    Add-ToDiagram $stateClassDiagram $inStock 535 635 230 150
-    Add-ToDiagram $stateClassDiagram $invoiced 795 635 245 170
-    Add-ToDiagram $stateClassDiagram $paid 115 850 220 115
-    Add-ToDiagram $stateClassDiagram $cancelled 400 850 220 125
-    Add-ToDiagram $stateClassDiagram $returned 685 850 220 115
-    Add-ToDiagram $stateClassDiagram $experimentDemo 1040 850 235 95
+    Add-ToDiagram $stateClassDiagram $purchaseOrder 35 45 470 405
+    Add-ToDiagram $stateClassDiagram $operationLog 35 535 310 145
+    Add-ToDiagram $stateClassDiagram $userRole 380 535 170 100
+    Add-ToDiagram $stateClassDiagram $state 620 45 520 260
+    Add-ToDiagram $stateClassDiagram $abstractState 700 420 380 110
+    Add-ToDiagram $stateClassDiagram $businessException 1175 420 240 105
+    Add-ToDiagram $stateClassDiagram $draft 35 740 215 135
+    Add-ToDiagram $stateClassDiagram $approved 280 740 235 150
+    Add-ToDiagram $stateClassDiagram $partiallyInStock 545 740 245 150
+    Add-ToDiagram $stateClassDiagram $inStock 820 740 230 150
+    Add-ToDiagram $stateClassDiagram $partiallyInvoiced 1080 740 255 165
+    Add-ToDiagram $stateClassDiagram $invoiced 80 980 240 165
+    Add-ToDiagram $stateClassDiagram $paid 360 980 215 120
+    Add-ToDiagram $stateClassDiagram $cancelled 615 980 220 125
+    Add-ToDiagram $stateClassDiagram $returned 870 980 220 115
+    Add-ToDiagram $stateClassDiagram $businessDocument 1460 55 260 140
+    Add-ToDiagram $stateClassDiagram $abstractDocument 1460 275 300 190
+    Add-ToDiagram $stateClassDiagram $documentType 1165 555 230 110
+    Add-ToDiagram $stateClassDiagram $inboundDocument 1440 540 230 100
+    Add-ToDiagram $stateClassDiagram $invoiceDocument 1695 540 230 100
+    Add-ToDiagram $stateClassDiagram $returnDocument 1565 700 230 100
+    Add-ToDiagram $stateClassDiagram $documentFactory 1445 900 310 110
+    Add-ToDiagram $stateClassDiagram $validationContext 1980 55 290 170
+    Add-ToDiagram $stateClassDiagram $validationRule 1980 300 285 135
+    Add-ToDiagram $stateClassDiagram $validationChains 1980 505 360 130
+    Add-ToDiagram $stateClassDiagram $productNameRule 1980 715 230 90
+    Add-ToDiagram $stateClassDiagram $positiveQuantityRule 2235 715 230 90
+    Add-ToDiagram $stateClassDiagram $supplierRule 1980 850 230 90
+    Add-ToDiagram $stateClassDiagram $maxQuantityRule 2235 850 230 90
+    Add-ToDiagram $stateClassDiagram $adminRoleRule 2110 985 230 90
+    Add-ToDiagram $stateClassDiagram $experimentDemo 1160 980 235 95
     [void]$stateClassDiagram.Update()
 
     $stateDiagram = Add-Diagram $statePkg "实验11_WMS采购单状态流转图" "Statechart"
     $sDraft = Add-Element $statePkg "草稿" "State"
     $sApproved = Add-Element $statePkg "已审批" "State"
+    $sPartiallyInStock = Add-Element $statePkg "部分入库" "State"
     $sInStock = Add-Element $statePkg "已入库" "State"
+    $sPartiallyInvoiced = Add-Element $statePkg "部分开票" "State"
     $sInvoiced = Add-Element $statePkg "已开票" "State"
     $sPaid = Add-Element $statePkg "已付款" "State"
     $sCancelled = Add-Element $statePkg "已取消" "State"
     $sReturned = Add-Element $statePkg "已退货完结" "State"
     Add-ToDiagram $stateDiagram $sDraft 65 120 150 80
     Add-ToDiagram $stateDiagram $sApproved 300 120 150 80
-    Add-ToDiagram $stateDiagram $sInStock 545 120 150 80
-    Add-ToDiagram $stateDiagram $sInvoiced 790 120 150 80
-    Add-ToDiagram $stateDiagram $sPaid 1035 120 150 80
-    Add-ToDiagram $stateDiagram $sCancelled 295 340 150 80
-    Add-ToDiagram $stateDiagram $sReturned 690 340 170 80
+    Add-ToDiagram $stateDiagram $sPartiallyInStock 535 75 155 80
+    Add-ToDiagram $stateDiagram $sInStock 535 205 155 80
+    Add-ToDiagram $stateDiagram $sPartiallyInvoiced 785 75 155 80
+    Add-ToDiagram $stateDiagram $sInvoiced 785 205 155 80
+    Add-ToDiagram $stateDiagram $sPaid 1035 205 150 80
+    Add-ToDiagram $stateDiagram $sCancelled 300 395 150 80
+    Add-ToDiagram $stateDiagram $sReturned 690 395 170 80
     foreach ($transition in @(
         @($sDraft,$sApproved,"审批"),
         @($sDraft,$sCancelled,"取消"),
         @($sApproved,$sCancelled,"取消"),
-        @($sApproved,$sInStock,"生成入库单"),
-        @($sInStock,$sInvoiced,"生成发票"),
+        @($sApproved,$sPartiallyInStock,"部分入库"),
+        @($sPartiallyInStock,$sInStock,"补齐入库"),
+        @($sApproved,$sInStock,"全量入库"),
+        @($sInStock,$sPartiallyInvoiced,"部分开票"),
+        @($sPartiallyInvoiced,$sInvoiced,"补齐发票"),
+        @($sInStock,$sInvoiced,"全量开票"),
         @($sInStock,$sReturned,"退货退款"),
         @($sInvoiced,$sPaid,"付款"),
+        @($sPartiallyInvoiced,$sReturned,"退货退款"),
         @($sInvoiced,$sReturned,"退货退款")
     )) {
         Add-StateFlow $repo $transition[0] $transition[1] $transition[2]
@@ -437,6 +547,9 @@ finally {
 
 Write-Output "EA project generated: $target"
 Write-Output "EA diagram images exported to: $imageDir"
+
+
+
 
 
 

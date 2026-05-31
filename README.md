@@ -17,7 +17,7 @@
 本项目完成两部分内容：
 
 1. 课堂任务：使用观察者模式设计机房温度监控响应系统。温度传感器作为目标对象，警示灯、报警器、安全逃生门、隔热门作为观察者对象；当温度超过阈值时，传感器统一通知所有响应设备。
-2. 实验11：使用状态模式实现 WMS 仓储系统采购单全生命周期业务。采购单从草稿、已审批、已入库、已开票、已付款、已取消、已退货完结等状态之间流转，各状态类分别封装对应状态下允许和禁止的业务操作。
+2. 实验11：使用状态模式实现 WMS 仓储系统采购单全生命周期业务。采购单从草稿、已审批、部分入库、已入库、部分开票、已开票、已付款、已取消、已退货完结等状态之间流转，各状态类分别封装对应状态下允许和禁止的业务操作。
 
 ## 三、设计模式说明
 
@@ -27,7 +27,14 @@
 
 ### 状态模式
 
-状态模式用于采购单生命周期业务控制。`PurchaseOrder` 是环境类，持有当前 `PurchaseOrderState`。业务方法不在 `PurchaseOrder` 中使用大量 `if-else` 或 `switch` 判断状态，而是委托给当前状态对象处理。`DraftState`、`ApprovedState`、`InStockState`、`InvoicedState`、`PaidState`、`CancelledState`、`ReturnedState` 分别封装对应状态下的操作权限、状态流转和非法操作拦截逻辑。
+状态模式用于采购单生命周期业务控制。`PurchaseOrder` 是环境类，持有当前 `PurchaseOrderState`。业务方法不在 `PurchaseOrder` 中使用大量 `if-else` 或 `switch` 判断状态，而是委托给当前状态对象处理。`DraftState`、`ApprovedState`、`PartiallyInStockState`、`InStockState`、`PartiallyInvoicedState`、`InvoicedState`、`PaidState`、`CancelledState`、`ReturnedState` 分别封装对应状态下的操作权限、状态流转和非法操作拦截逻辑。
+
+### 加分项设计
+
+- 责任链模式：`state.validation` 包通过 `OrderValidationRule` 串联商品名称、数量、供应商、管理员权限等校验，避免把公共校验散落在业务方法里。
+- 权限校验：`UserRole` 区分普通操作员和管理员，只有管理员可以在已审批状态撤销审批并退回草稿。
+- 部分入库/部分开票：新增 `PartiallyInStockState` 和 `PartiallyInvoicedState`，支持采购单分批生成入库单、分批生成发票，补齐后自动进入已入库或已开票。
+- 工厂模式：`BusinessDocumentFactory` 统一创建入库单、发票和退货单，采购单输出中会展示关联业务单据。
 
 ## 四、项目结构
 
@@ -52,12 +59,23 @@ experiment11-state-observer
 │       ├── AbstractPurchaseOrderState.java
 │       ├── DraftState.java
 │       ├── ApprovedState.java
+│       ├── PartiallyInStockState.java
 │       ├── InStockState.java
+│       ├── PartiallyInvoicedState.java
 │       ├── InvoicedState.java
 │       ├── PaidState.java
 │       ├── CancelledState.java
 │       ├── ReturnedState.java
 │       ├── OperationLog.java
+│       ├── UserRole.java
+│       ├── BusinessDocumentFactory.java
+│       ├── BusinessDocument.java
+│       ├── InboundOrderDocument.java
+│       ├── InvoiceDocument.java
+│       ├── ReturnOrderDocument.java
+│       ├── validation
+│       │   ├── OrderValidationRule.java
+│       │   └── OrderValidationChains.java
 │       ├── BusinessException.java
 │       └── Experiment11Demo.java
 ├── report-images
@@ -75,6 +93,7 @@ UML 图已在 Enterprise Architect 12 中建立并导出到 `report-images/`：
 - `05_state_normal_sequence.png`：实验11 WMS 采购单正常流程顺序图
 - `06_state_invalid_sequence.png`：实验11 WMS 采购单非法操作拦截顺序图
 - `07_state_return_sequence.png`：实验11 WMS 采购单退货退款流程顺序图
+- `16_advanced_bonus_result.png`：进阶加分项运行结果截图
 
 EA 项目文件：`实验11_121072021030_林立洲.eap`。
 
@@ -107,6 +126,7 @@ com.lzl.experiment11.MainApp
 - 取消流程：`PO-002` 审批后取消，最终状态为已取消。
 - 退货退款流程：`PO-003` 审批、入库后退货退款，最终状态为已退货完结。
 - 非法操作拦截：草稿直接入库、草稿直接付款、已入库取消、已开票后编辑、已取消后审批均被 `BusinessException` 拦截，并输出明确中文原因。
+- 进阶加分流程：`PO-BONUS-001` 验证普通操作员不能撤销审批、管理员可以撤销审批；`PO-BONUS-002` 验证部分入库、补齐入库、部分开票、补齐发票和付款闭环。
 - 操作日志：每个采购单在最终输出时展示状态变更历史。
 
 运行结果保存在：
